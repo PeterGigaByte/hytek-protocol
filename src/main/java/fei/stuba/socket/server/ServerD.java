@@ -20,17 +20,6 @@ public class ServerD {
         }
 
     }
-    public void readData(Socket clientSocket) throws IOException{
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            if (".".equals(inputLine)) {
-                break;
-            }
-            System.out.println(inputLine);
-        }
-    }
-
     /*
     SOH : 01h
     STX : 02h

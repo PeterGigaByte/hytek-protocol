@@ -15,17 +15,17 @@ public class SocketApplication {
     public static void main(String[] args) throws IOException {
         SpringApplication.run(SocketApplication.class,args);
 
-        //Server server = new Server();
-        //server.start(8055);
+        Server server = new Server();
+        server.start(8055);
 
-         //ServerB serverB = new ServerB();
-         //serverB.start(8055);
+        //ServerB serverB = new ServerB();
+        //serverB.start(8055);
 
         //ServerC serverC = new ServerC();
         //serverC.start(8055);
 
-        ServerD serverD = new ServerD();
-        serverD.start(8055);
+        //ServerD serverD = new ServerD();
+        //serverD.start(8055);
 
         /*
         Client client = new Client();

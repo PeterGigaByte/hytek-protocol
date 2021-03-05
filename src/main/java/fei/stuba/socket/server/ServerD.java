@@ -18,7 +18,6 @@ public class ServerD {
             clientSentence = in.readLine();
             System.out.println("Received: " + clientSentence);
         }
-
     }
     /*
     SOH : 01h

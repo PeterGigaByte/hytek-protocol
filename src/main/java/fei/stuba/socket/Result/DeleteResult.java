@@ -9,13 +9,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Results {
+public class DeleteResult {
     private String idRace;
-    private String ord;
-    private String lane;
     private String bib;
-    private String wind;
-    private String time;
-
-
+    private String lane;
 }

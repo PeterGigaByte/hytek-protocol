@@ -5,13 +5,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Results {
-    private String idDiscipline;
-    private List<Result> resultArrayList = new ArrayList<>();
+public class Result {
+    private String idRace;
+    private String ord;
+    private String lane;
+    private String bib;
+    private String wind;
+    private String time;
 }

@@ -1,13 +1,12 @@
 package fei.stuba.socket.server;
 import fei.stuba.socket.Result.DeleteResult;
-import fei.stuba.socket.Result.Results;
+import fei.stuba.socket.Result.Result;
 
 import java.net.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
- * bib - max 10 000
  * only for iaaf rules tested !!
  */
 
@@ -29,7 +28,7 @@ public class Server {
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private DataInputStream in;
-    private Results results = new Results();
+    private Result result = new Result();
     private DeleteResult deleteResult = new DeleteResult();
 
     /**
@@ -65,6 +64,7 @@ public class Server {
 
     public void readingBinaryDataFromSocket(DataInputStream in,String SOHandDC3) throws IOException{
         String temp=SOHandDC3;
+        //System.out.println("temp = " + temp);
         try {
             SOHandDC3 = Integer.toHexString(in.readChar());
         }catch (EOFException e){
@@ -73,120 +73,109 @@ public class Server {
         //System.out.println("SOH and DC3 = " + SOHandDC3);
         if(SOHandDC3.equals("113")) { //113 -> SOH (01) -> start of communication + DC3 (13)
             String DV = Integer.toHexString(in.readChar());
-            //System.out.println("DV = " + DV);
+          //  System.out.println("DV = " + DV);
             if (DV.equals("4456")) { //4456 -> DV(44 56)
                 String type = Integer.toHexString(in.readChar()) + Integer.toHexString(in.readByte());
-              //  System.out.println("type = " + type);
+            //    System.out.println("type = " + type);
                 String STX = Integer.toHexString(in.readByte());
                 switch (type) {
                     case "534e52": //SNR
                         if (STX.equals("2")) {
-                //            System.out.println("STX = " + STX);
-                  //          System.out.println("id race");
-                            byte[] message = new byte[8];
-                            in.read(message);
-                            String test = new String(message,StandardCharsets.UTF_8);
-                            test = test.replaceAll("\\s","");
-                            results.setIdRace(test);
-                            deleteResult.setIdRace(test);
-                            //System.out.println(test);
+                            //System.out.println("STX = " + STX);
+                            //System.out.println("id race");
+                            byte[] idRace = new byte[8];
+                            in.read(idRace);
+                            String idRaceString = (new String(idRace,StandardCharsets.UTF_8).replaceAll("\\s",""));
+                            result.setIdRace(idRaceString);
+                            deleteResult.setIdRace(idRaceString);
+                            //System.out.println(result.getIdRace());
                         }
 
                         break;
                     case "52574d": //RWM
                         if (STX.equals("2")) {
-                    //        System.out.println("STX = " + STX);
-                      //      System.out.println("out wind");
-                            byte[] message = new byte[9];
-                            in.read(message);
-                            String test = new String(message,StandardCharsets.UTF_8);
-                            test = test.trim().replaceAll(" +"," ");
-                            results.setWind(test);
-                            //System.out.println(test);
+                            //System.out.println("STX = " + STX);
+                            //System.out.println("out wind");
+                            byte[] wind = new byte[9];
+                            in.read(wind);
+                            result.setWind(new String(wind,StandardCharsets.UTF_8).trim().replaceAll(" +"," "));
+                            //System.out.println(result.getWind());
                         }
 
                         break;
+                        //RDC ak je RDC message 0 -> vymaž všetky výsledky
                     case "524443": //RDC
                         if (STX.equals("2")) {
-                        //    System.out.println("STX = " + STX);
-                          //  System.out.println("start of transfer ranking");
+                            //System.out.println("STX = " + STX);
+                            //System.out.println("start of transfer ranking");
                             byte[] message = new byte[3];
                             in.read(message);
-                            String test = new String(message,StandardCharsets.UTF_8);
+
+                            String test = (new String(message,StandardCharsets.UTF_8).replaceAll("\\s",""));
+                            if(test.equals("0")){
+                                System.out.println("vymaž všetky výsledky");
+                            }
                             //System.out.println(test);
                         }
 
                         break;
                     case "524343": //RCC
                         if (STX.equals("2")) {
-                           // System.out.println("STX = " + STX);
-                           // System.out.println("result of ranked comp");
-                            byte[] message = new byte[22];
-                            in.read(message);
-                            String test = new String(message, StandardCharsets.UTF_8);
-                            test = test.trim().replaceAll(" +"," ");
-                            String[] splitBySpaces = test.split("\\s+");
-                            try{
-                            if(splitBySpaces.length==3){
-                                results.setOrd(splitBySpaces[0]);
-                                results.setBib(splitBySpaces[1].substring(0,splitBySpaces[1].length()-2));
-                                results.setLane(splitBySpaces[1].substring(splitBySpaces[1].length()-2));
-                                results.setTime(splitBySpaces[2]);
-                            }
-                            else {
-                                results.setOrd(splitBySpaces[0]);
-                                results.setBib(splitBySpaces[1]);
-                                results.setLane(splitBySpaces[2]);
-                                results.setTime(splitBySpaces[3]);
-                            }System.out.println(results.toString());
-                        }catch (StringIndexOutOfBoundsException e){
-                                System.out.println(e.getMessage());
-                            }
+                            //System.out.println("STX = " + STX);
+                            //System.out.println("result of ranked comp");
+                            byte[] order = new byte[3];
+                            byte[] bib = new byte[5];
+                            byte[] lane = new byte[2];
+                            byte[] time = new byte[12];
+                            in.read(order);in.read(bib);in.read(lane);in.read(time);
+                            result.setOrd((new String(order,StandardCharsets.UTF_8)).replaceAll("\\s+",""));
+                            result.setBib((new String(bib,StandardCharsets.UTF_8)).replaceAll("\\s+",""));
+                            result.setLane((new String(lane,StandardCharsets.UTF_8)).replaceAll("\\s+",""));
+                            result.setTime((new String(time,StandardCharsets.UTF_8)).replaceAll("\\s+",""));
+                            System.out.println(result.toString());
                         }
 
                         break;
                     case "525443": //RTC
                         if (STX.equals("2")) {
-                        //    System.out.println("STX = " + STX);
-                        //    System.out.println("result of temp class");
+                           System.out.println("STX = " + STX);
+                            System.out.println("result of temp class");
                             byte[] message = new byte[26];
                             in.read(message);
                             String test = new String(message,StandardCharsets.UTF_8);
-                            // System.out.println(test);
+                             //System.out.println(test);
                         }
-
                         break;
                     case "524643": //RFC
                         if (STX.equals("4")) {
-                          //  System.out.println("EOT = " + STX);
-                          //  System.out.println("end of transfer ranking");
-                            System.out.println("end of transmission");
+                            //System.out.println("EOT = " + STX);
+                            //System.out.println("end of transfer ranking");
+                            //System.out.println("end of transmission");
                             //nothing
                         }
 
                         break;
                     case "524346": //RCF
                         if (STX.equals("2")) {
-                          //  System.out.println("STX = " + STX);
-                          //  System.out.println("DVRCF");
+                            //System.out.println("STX = " + STX);
+                            //System.out.println("DVRCF");
                             byte[] message = new byte[16];
                             in.read(message);
                             String test = new String(message,StandardCharsets.UTF_8);
                             //System.out.println(test);
                             String nullByte = Integer.toHexString(in.readByte());
                             if(nullByte.equals("4")){
-                            //    System.out.println("end of transmission");
-                            //        System.out.println("correct ending");
+                                //System.out.println("end of transmission");
+                                //System.out.println("correct ending");
                                 readingBinaryDataFromSocket(in,nullByte);
-
                             }
 
                         }
                         break;
                     case "52464a": //RFJ
                         if (STX.equals("2")) {
-                         //   System.out.println("STX = " + STX);
-                         //   System.out.println("end of judgement");
+                           //System.out.println("STX = " + STX);
+                            //System.out.println("end of judgement");
                             byte[] message = new byte[8];
                             in.read(message);
                             String test = new String(message,StandardCharsets.UTF_8);
@@ -201,6 +190,7 @@ public class Server {
                             //System.out.println("output day time");
                             byte[] message = new byte[13];
                             in.read(message);
+                            //System.out.println(message);
                         }
 
                         break;
@@ -209,42 +199,31 @@ public class Server {
                     case "534348": //SCH
                         if (STX.equals("2")) {
                             while(!Integer.toHexString(in.readByte()).equals("4"));
-                            //System.out.println("STX = " + STX);
-                            //System.out.println("supplementary .. data");
+                            System.out.println("STX = " + STX);
+                            System.out.println("supplementary .. data");
                         }
-
                         break;
 
                     //System.out.println("supplementary .. header");
                     case "524356": //RCV
                         if (STX.equals("2")) {
-                           // System.out.println("STX = " + STX);
-                           // System.out.println("Result of competitor");
+                            System.out.println("STX = " + STX);
+                            System.out.println("Result of competitor");
                             byte[] message = new byte[19];
                             in.read(message);
                             String test = new String(message,StandardCharsets.UTF_8);
-                            //System.out.println(test);
+                            System.out.println(test);
                         }
                         break;
                     case "524353": //RCS
                         if (STX.equals("2")) {
                         //    System.out.println("STX = " + STX);
-                        //    System.out.println("DVRCS");
-                            byte[] message = new byte[7];
-                            in.read(message);
-                            String test = new String(message,StandardCharsets.UTF_8);
-                            test = test.trim().replaceAll(" +"," ");
-                            String[] splitBySpaces = test.split("\\s+");
-                            try{
-                            if(splitBySpaces.length==1){
-                                deleteResult.setBib(splitBySpaces[0].substring(0,splitBySpaces[0].length()-2));deleteResult.setLane(splitBySpaces[0].substring(splitBySpaces[0].length()-2));
-                            }else{
-                                deleteResult.setBib(splitBySpaces[0]);deleteResult.setLane(splitBySpaces[1]);
-                            }
-                            }catch (StringIndexOutOfBoundsException e){
-                                System.out.println(e.getMessage());
-                            }
-
+                          //  System.out.println("DVRCS");
+                            byte[] bib = new byte[5];
+                            byte[] lane = new byte[2];
+                            in.read(bib);in.read(lane);
+                            deleteResult.setBib((new String(bib,StandardCharsets.UTF_8).replaceAll("\\s+","")));
+                            deleteResult.setLane((new String(lane,StandardCharsets.UTF_8).replaceAll("\\s+","")));
                             System.out.println(deleteResult.toString());
                         }
                         break;
@@ -254,8 +233,8 @@ public class Server {
                 String EOT = Integer.toHexString(in.readByte());
                 if (EOT.equals("4")) {
                     String nullByte = Integer.toHexString(in.readByte());
-                //    System.out.println("end of transmission");
-                //    System.out.println("correct ending");
+                    System.out.println("end of transmission");
+                    System.out.println("correct ending");
                     readingBinaryDataFromSocket(in,nullByte);
                 }
                 else if(EOT.equals("0")){
@@ -280,7 +259,7 @@ public class Server {
                 readingBinaryDataFromSocket(in,SOHandDC3);
             }
             else {
-              //  System.out.println("End of Packet");
+                System.out.println("End of Packet");
                 readingBinaryDataFromSocket(in,SOHandDC3);
             }
         }

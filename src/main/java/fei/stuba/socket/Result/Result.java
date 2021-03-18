@@ -10,10 +10,8 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class Result {
-    private String idRace;
     private String ord;
     private String lane;
     private String bib;
-    private String wind;
     private String time;
 }

@@ -12,6 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class Results {
-    private String idDiscipline;
+    private String idRace;
+    private String status;
+    private String wind;
     private List<Result> resultArrayList = new ArrayList<>();
 }

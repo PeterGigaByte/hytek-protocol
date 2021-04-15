@@ -1,4 +1,4 @@
-package fei.stuba.socket.Result;
+package fei.stuba.socket.result;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

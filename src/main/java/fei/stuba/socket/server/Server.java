@@ -1,7 +1,7 @@
 package fei.stuba.socket.server;
-import fei.stuba.socket.Result.DeleteResult;
-import fei.stuba.socket.Result.Result;
-import fei.stuba.socket.Result.Results;
+import fei.stuba.socket.result.DeleteResult;
+import fei.stuba.socket.result.Result;
+import fei.stuba.socket.result.Results;
 
 import java.net.*;
 import java.io.*;
@@ -31,11 +31,14 @@ public class Server {
     private DataInputStream in;
     private Results results = new Results();
     private DeleteResult deleteResult = new DeleteResult();
+    private fei.stuba.socket.service.Results resultsService ;
+
 
     /**
      * Táto funkcia nám vytvorí port a následne spustí čítanie dát
      *
      */
+
     public void start(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         while(true) {
@@ -127,6 +130,7 @@ public class Server {
                                 result.setLane((new String(lane,StandardCharsets.UTF_8)).replaceAll("\\s+",""));
                                 result.setTime((new String(time,StandardCharsets.UTF_8)).replaceAll("\\s+",""));
                                 results.getResultArrayList().add(result);
+                                resultsService.setResults(results);
                                 //System.out.println(result.toString());
                             }
 

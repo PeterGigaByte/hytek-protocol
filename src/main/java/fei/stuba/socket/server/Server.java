@@ -2,6 +2,10 @@ package fei.stuba.socket.server;
 import fei.stuba.socket.result.DeleteResult;
 import fei.stuba.socket.result.Result;
 import fei.stuba.socket.result.Results;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 
 import java.net.*;
 import java.io.*;
@@ -10,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 /**
  * only for iaaf rules tested !!
  */
-
 public class Server {
     /**
      *  #serverSocket - Vytvorenie počúvajúceho port
@@ -31,8 +34,11 @@ public class Server {
     private DataInputStream in;
     private Results results = new Results();
     private DeleteResult deleteResult = new DeleteResult();
-    private fei.stuba.socket.service.Results resultsService ;
+    private fei.stuba.socket.service.Results resultsService;
 
+    public void setResultsService(fei.stuba.socket.service.Results resultsService) {
+        this.resultsService = resultsService;
+    }
 
     /**
      * Táto funkcia nám vytvorí port a následne spustí čítanie dát

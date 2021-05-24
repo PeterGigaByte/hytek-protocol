@@ -1,9 +1,6 @@
 package fei.stuba.socket.implementation;
 
-import fei.stuba.socket.database.models.Athlete;
-import fei.stuba.socket.database.models.Bib;
-import fei.stuba.socket.database.models.Race;
-import fei.stuba.socket.database.models.ResultStartList;
+import fei.stuba.socket.database.models.*;
 import fei.stuba.socket.database.repository.BibRepository;
 import fei.stuba.socket.database.repository.DisciplineRepository;
 import fei.stuba.socket.database.repository.RaceRepository;
@@ -23,27 +20,56 @@ public class Results implements fei.stuba.socket.service.Results {
     private ResultStartListRepository resultStartListRepository;
     @Autowired
     private BibRepository bibRepository;
+    @Autowired
+    private DisciplineRepository disciplineRepository;
 
 
-    public Results(ResultStartListRepository resultStartListRepository, BibRepository bibRepository, RaceRepository raceRepository) {
+    public Results(ResultStartListRepository resultStartListRepository, BibRepository bibRepository, RaceRepository raceRepository,DisciplineRepository disciplineRepository) {
         this.resultStartListRepository = resultStartListRepository;
         this.bibRepository = bibRepository;
         this.raceRepository = raceRepository;
+        this.disciplineRepository = disciplineRepository;
 
     }
     @Override
     public void setResults(fei.stuba.socket.result.Results results){
+        /**
+         * Získanie aktívneho závodu a overenie či nejaký závod vôbec prebieha
+         */
         Race race = getActiveRace();
         if(race != null){
+            /**
+             * bibMap - Mapa s bib číslami atlétov
+             * resultStartLists - štartová listina, podľa zadaného ID disciplíny z kamerového softvéra
+             */
+            int id = Integer.parseInt(results.getIdRace());
             Map<Athlete, Bib> bibMap = bibRepository.findByRaceIdMap(race.getId());
-            List<ResultStartList> resultStartLists = resultStartListRepository.findAllByDisciplineIdOrderByResultPerformanceAsc(Integer.parseInt(results.getIdRace()));
-            for (fei.stuba.socket.result.Result result: results.getResultArrayList()) {
+            List<ResultStartList> resultStartLists = resultStartListRepository.findAllByDisciplineIdOrderByResultPerformanceAsc(id);
+            /**
+             * V tomto cykle si zoberieme načítané výsledky z kamerového softvéru
+             * Následne prehľadáve resultStartList(štartovú listinu) a zapíšeme získané údaje z kamerového softvéru
+             * Nakoniec uložíme editovaný resultStartList do databázy
+             */
+            if(resultStartLists.size() != 0){
                 for (ResultStartList resultStartList:resultStartLists) {
-                    if(Integer.parseInt(result.getBib()) == (bibMap.get(resultStartList.getAthlete()).getBib()) && Integer.parseInt(result.getLane())==(resultStartList.getLine())){
-                        resultStartList.setPlace(result.getOrd());
-                        resultStartList.setResultPerformance(stringTimeToDouble(result.getTime()));
+                    int counter = 0;
+                    for (fei.stuba.socket.result.Result result: results.getResultArrayList()) {
+                        if(Integer.parseInt(result.getBib()) == (bibMap.get(resultStartList.getAthlete()).getBib()) && Integer.parseInt(result.getLane())==(resultStartList.getLine())){
+                            resultStartList.setPlace(result.getOrd()+".");
+                            resultStartList.setResultPerformance(stringTimeToDouble(result.getTime()));
+                            resultStartListRepository.save(resultStartList);
+                            counter++;
+                        }
+                    }
+                    if(counter==0){
+                        resultStartList.setResultPerformance(null);
+                        resultStartList.setPlace(null);
+                        resultStartListRepository.save(resultStartList);
                     }
                 }
+                Discipline discipline = disciplineRepository.findDisciplinesById(id);
+                discipline.setWind(results.getWind());
+                disciplineRepository.save(discipline);
             }
         }
     }
